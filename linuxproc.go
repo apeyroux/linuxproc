@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -17,6 +18,37 @@ func processStatus(p Process) (status []byte, err error) {
 	status, err = ioutil.ReadFile(statuspath)
 	if err != nil {
 		return
+	}
+	return
+}
+
+func sectionString(regex string, status []byte) (result string) {
+	rx := regexp.MustCompile(regex)
+	match := rx.FindAllSubmatch(status, -1)
+	if len(match) != 0 {
+		result = strings.TrimSpace(string(match[0][1]))
+	}
+	return
+}
+
+func sectionInt(regex string, status []byte) (result int) {
+	rx := regexp.MustCompile(regex)
+	match := rx.FindAllSubmatch(status, -1)
+	if len(match) != 0 {
+		result, _ = strconv.Atoi(strings.TrimSpace(string(match[0][1])))
+	}
+	return
+}
+
+func sectionSInt(regex string, status []byte) (result []int) {
+	rx := regexp.MustCompile(regex)
+	match := rx.FindAllSubmatch(status, -1)
+	if len(match) != 0 {
+		sresult := strings.Fields(strings.TrimSpace(string(match[0][1])))
+		for _, r := range sresult {
+			rx, _ := strconv.Atoi(r)
+			result = append(result, rx)
+		}
 	}
 	return
 }
@@ -41,11 +73,7 @@ func (p Process) State() (state string, err error) {
 	if err != nil {
 		return
 	}
-	rxState := regexp.MustCompile("State:(.*)")
-	matchState := rxState.FindAllSubmatch(status, -1)
-	if len(matchState) != 0 {
-		state = strings.TrimSpace(string(matchState[0][1]))
-	}
+	state = sectionString("State:(.*)", status)
 	return
 }
 
@@ -54,10 +82,51 @@ func (p Process) VmSize() (vmSize string, err error) {
 	if err != nil {
 		return
 	}
-	rxVmSize := regexp.MustCompile("VmSize:(.*)")
-	matchVmSize := rxVmSize.FindAllSubmatch(status, -1)
-	if len(matchVmSize) != 0 {
-		vmSize = strings.TrimSpace(string(matchVmSize[0][1]))
+	vmSize = sectionString("VmSize:(.*)", status)
+	return
+}
+
+func (p Process) VmPeak() (vmPeak string, err error) {
+	status, err := processStatus(p)
+	if err != nil {
+		return
 	}
+	vmPeak = sectionString("VmPeak:(.*)", status)
+	return
+}
+
+func (p Process) VmData() (vmData string, err error) {
+	status, err := processStatus(p)
+	if err != nil {
+		return
+	}
+	vmData = sectionString("VmData:(.*)", status)
+	return
+}
+
+func (p Process) Uid() (uid []int, err error) {
+	status, err := processStatus(p)
+	if err != nil {
+		return
+	}
+	uid = sectionSInt("Uid:(.*)", status)
+	return
+}
+
+func (p Process) Gid() (uid []int, err error) {
+	status, err := processStatus(p)
+	if err != nil {
+		return
+	}
+	uid = sectionSInt("Gid:(.*)", status)
+	return
+}
+
+func (p Process) PPid() (ppid int, err error) {
+	status, err := processStatus(p)
+	if err != nil {
+		return
+	}
+	ppid = sectionInt("PPid:(.*)", status)
 	return
 }
