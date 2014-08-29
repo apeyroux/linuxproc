@@ -1,5 +1,7 @@
 package linuxproc
 
+//ok
+
 import (
 	"fmt"
 	"io/ioutil"
@@ -8,6 +10,8 @@ import (
 	"strings"
 )
 
+type Memory struct{}
+
 type Process struct {
 	Name string
 	Pid  int
@@ -15,6 +19,15 @@ type Process struct {
 
 func processStatus(p Process) (status []byte, err error) {
 	statuspath := fmt.Sprintf("/proc/%d/status", p.Pid)
+	status, err = ioutil.ReadFile(statuspath)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func memoryStatus() (status []byte, err error) {
+	statuspath := fmt.Sprintf("/proc/meminfo")
 	status, err = ioutil.ReadFile(statuspath)
 	if err != nil {
 		return
@@ -53,6 +66,26 @@ func sectionSInt(regex string, status []byte) (result []int) {
 	return
 }
 
+func (m Memory) MemTotal() (memTotal int, err error) {
+	status, err := memoryStatus()
+	if err != nil {
+		return
+	}
+	smemTotal := strings.Fields(strings.TrimSpace(sectionString("MemTotal:(.*)", status)))
+	memTotal, err = strconv.Atoi(smemTotal[0])
+	return
+}
+
+func (m Memory) MemFree() (memFree int, err error) {
+	status, err := memoryStatus()
+	if err != nil {
+		return
+	}
+	smemFree := strings.Fields(strings.TrimSpace(sectionString("MemFree:(.*)", status)))
+	memFree, err = strconv.Atoi(smemFree[0])
+	return
+}
+
 func FindProcess(pid int) (p *Process, err error) {
 	p = new(Process)
 	p.Pid = pid
@@ -77,30 +110,33 @@ func (p Process) State() (state string, err error) {
 	return
 }
 
-func (p Process) VmSize() (vmSize string, err error) {
+func (p Process) VmSize() (vmSize int, err error) {
 	status, err := processStatus(p)
 	if err != nil {
 		return
 	}
-	vmSize = sectionString("VmSize:(.*)", status)
+	svmSize := strings.Fields(strings.TrimSpace(sectionString("VmSize:(.*)", status)))
+	vmSize, err = strconv.Atoi(svmSize[0])
 	return
 }
 
-func (p Process) VmPeak() (vmPeak string, err error) {
+func (p Process) VmPeak() (vmPeak int, err error) {
 	status, err := processStatus(p)
 	if err != nil {
 		return
 	}
-	vmPeak = sectionString("VmPeak:(.*)", status)
+	svmPeak := strings.Fields(strings.TrimSpace(sectionString("VmPeak:(.*)", status)))
+	vmPeak, err = strconv.Atoi(svmPeak[0])
 	return
 }
 
-func (p Process) VmData() (vmData string, err error) {
+func (p Process) VmData() (vmData int, err error) {
 	status, err := processStatus(p)
 	if err != nil {
 		return
 	}
-	vmData = sectionString("VmData:(.*)", status)
+	svmData := strings.Fields(strings.TrimSpace(sectionString("VmData:(.*)", status)))
+	vmData, err = strconv.Atoi(svmData[0])
 	return
 }
 
