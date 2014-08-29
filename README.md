@@ -1,4 +1,4 @@
-#GeocodeComp
+#LinuxProc
 
 ## Getting more informations from linux process
 ## Langage : GO
