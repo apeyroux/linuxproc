@@ -126,7 +126,12 @@ func (p Process) VmPeak() (vmPeak int, err error) {
 		return
 	}
 	svmPeak := strings.Fields(strings.TrimSpace(sectionString("VmPeak:(.*)", status)))
-	vmPeak, err = strconv.Atoi(svmPeak[0])
+	if len(svmPeak) != 0 {
+		vmPeak, err = strconv.Atoi(svmPeak[0])
+		if err != nil {
+			return
+		}
+	}
 	return
 }
 
@@ -136,7 +141,12 @@ func (p Process) VmData() (vmData int, err error) {
 		return
 	}
 	svmData := strings.Fields(strings.TrimSpace(sectionString("VmData:(.*)", status)))
-	vmData, err = strconv.Atoi(svmData[0])
+	if len(svmData) != 0 {
+		vmData, err = strconv.Atoi(svmData[0])
+		if err != nil {
+			return
+		}
+	}
 	return
 }
 
